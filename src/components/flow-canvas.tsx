@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -21,9 +21,12 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import { jsPDF } from 'jspdf'
 import { toPng } from 'html-to-image'
+import { useRouter } from 'next/navigation'
 import DecisionNode from './decision-node'
 import WaypointNode from './waypoint-node'
 import TipsWindow from './tips-window'
+import AuthPanel from '@/components/auth-panel'
+import { ArrowLeft } from 'lucide-react'
 
 const nodeTypes = { decision: DecisionNode, waypoint: WaypointNode }
 const edgeTypes = { step: StepEdge }
@@ -47,6 +50,7 @@ interface FlowCanvasProps {
 }
 
 export default function FlowCanvas({ flowId }: FlowCanvasProps) {
+  const router = useRouter()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const [nodes, setNodes] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
@@ -54,12 +58,46 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [showTips, setShowTips] = useState(true)
   const [menu, setMenu] = useState<MenuState | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [flowTitle, setFlowTitle] = useState('Untitled Flow')
   const connectingNodeId = useRef<string | null>(null)
   const connectingHandleId = useRef<string | null>(null)
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  // --- LOAD FLOW ON MOUNT ---
+  useEffect(() => {
+    fetch(`/api/flows/${flowId}`)
+      .then(res => res.json())
+      .then(flow => {
+        if (flow.nodes) setNodes(flow.nodes)
+        if (flow.edges) setEdges(flow.edges)
+        if (flow.title) setFlowTitle(flow.title)
+      })
+  }, [flowId])
+
+  // --- AUTO-SAVE ---
+  const save = useCallback((currentNodes: Node[], currentEdges: Edge[]) => {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current)
+    saveTimeout.current = setTimeout(async () => {
+      setSaving(true)
+      await fetch(`/api/flows/${flowId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes: currentNodes, edges: currentEdges }),
+      })
+      setSaving(false)
+    }, 1000)
+  }, [flowId])
 
   const onNodesChangeInternal = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+    (changes: NodeChange[]) => {
+      setNodes((nds) => {
+        const updated = applyNodeChanges(changes, nds)
+        save(updated, edges)
+        return updated
+      })
+    },
+    [setNodes, edges, save]
   )
 
   const onConnectStart = useCallback((_: any, { nodeId, handleId }: { nodeId: string | null, handleId: string | null }) => {
@@ -133,8 +171,11 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
       markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 20, height: 20 },
     }
 
-    setNodes((nds) => nds.concat(newNode))
-    setEdges((eds) => eds.concat(newEdge))
+    const updatedNodes = nodes.concat(newNode)
+    const updatedEdges = edges.concat(newEdge)
+    setNodes(updatedNodes)
+    setEdges(updatedEdges)
+    save(updatedNodes, updatedEdges)
     setMenu(null)
     connectingNodeId.current = null
   }
@@ -143,19 +184,23 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
     const isYes = params.sourceHandle === 'yes'
     const isNo = params.sourceHandle === 'no'
     const edgeColor = isYes ? '#22c55e' : isNo ? '#ef4444' : '#64748b'
-    setEdges((eds) => addEdge({
-      ...params,
-      type: 'step',
-      label: isYes ? 'YES' : isNo ? 'NO' : '',
-      labelStyle: { fill: edgeColor, fontWeight: 900, fontSize: '10px' },
-      labelBgPadding: [4, 2],
-      labelBgBorderRadius: 4,
-      labelBgStyle: { fill: '#fff', fillOpacity: 0.8 },
-      animated: true,
-      style: { strokeWidth: 2, stroke: edgeColor },
-      markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 20, height: 20 },
-    }, eds))
-  }, [setEdges])
+    setEdges((eds) => {
+      const updated = addEdge({
+        ...params,
+        type: 'step',
+        label: isYes ? 'YES' : isNo ? 'NO' : '',
+        labelStyle: { fill: edgeColor, fontWeight: 900, fontSize: '10px' },
+        labelBgPadding: [4, 2],
+        labelBgBorderRadius: 4,
+        labelBgStyle: { fill: '#fff', fillOpacity: 0.8 },
+        animated: true,
+        style: { strokeWidth: 2, stroke: edgeColor },
+        markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 20, height: 20 },
+      }, eds)
+      save(nodes, updated)
+      return updated
+    })
+  }, [setEdges, nodes, save])
 
   const onNodeDragStop = useCallback((_: any, draggedNode: Node) => {
     const snapDistance = 30
@@ -180,9 +225,13 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
     })
 
     if (snapped) {
-      setNodes((nds) => nds.map((n) => n.id === draggedNode.id ? { ...n, position: { x: finalX, y: finalY } } : n))
+      setNodes((nds) => {
+        const updated = nds.map((n) => n.id === draggedNode.id ? { ...n, position: { x: finalX, y: finalY } } : n)
+        save(updated, edges)
+        return updated
+      })
     }
-  }, [nodes, setNodes])
+  }, [nodes, setNodes, edges, save])
 
   const onEdgeDoubleClick = useCallback((_: any, edge: Edge) => {
     if (!reactFlowInstance) return
@@ -209,7 +258,7 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
     if (!type || !reactFlowInstance) return
     const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY })
 
-    setNodes((nds) => [...nds, {
+    const newNode = {
       id: `node_${Date.now()}`,
       type: type === 'decision' ? 'decision' : 'default',
       position,
@@ -229,8 +278,13 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
         fontSize: '9px',
         textTransform: 'uppercase',
       },
-    }])
-  }, [reactFlowInstance, setNodes])
+    }
+    setNodes((nds) => {
+      const updated = [...nds, newNode]
+      save(updated, edges)
+      return updated
+    })
+  }, [reactFlowInstance, setNodes, edges, save])
 
   const exportToPdf = useCallback(() => {
     if (nodes.length === 0) return
@@ -262,9 +316,22 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
 
         {/* LEFT SIDEBAR */}
         <aside className="w-64 h-full bg-white border-r border-slate-200 p-6 z-30 shadow-xl flex flex-col gap-4">
-          <div className="flex items-center gap-2 mb-6">
+          
+          {/* BACK + LOGO */}
+          <div className="flex items-center gap-2 mb-2">
+            <button onClick={() => router.push('/')} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+              <ArrowLeft className="w-4 h-4 text-slate-400" />
+            </button>
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">F</div>
             <h1 className="text-xl font-black tracking-tighter text-blue-600 uppercase">Flowlit</h1>
+          </div>
+
+          {/* FLOW TITLE + SAVE STATUS */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-500 truncate">{flowTitle}</p>
+            <span className={`text-[9px] uppercase tracking-widest font-bold transition-opacity ${saving ? 'text-blue-400 opacity-100' : 'text-slate-300 opacity-60'}`}>
+              {saving ? 'Saving...' : 'Saved'}
+            </span>
           </div>
 
           <div className="space-y-3">
@@ -286,6 +353,8 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
             >
               Export as PDF
             </button>
+
+            <AuthPanel />
           </div>
         </aside>
 

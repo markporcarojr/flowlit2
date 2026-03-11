@@ -10,21 +10,23 @@ async function getAuthedFlow(clerkId: string, id: string) {
   return flow
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId: clerkId } = await auth()
   if (!clerkId) return new Response("Unauthorized", { status: 401 })
 
-  const flow = await getAuthedFlow(clerkId, params.id)
+  const { id } = await params
+  const flow = await getAuthedFlow(clerkId, id)
   if (!flow) return new Response("Not found", { status: 404 })
 
   return Response.json(flow)
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId: clerkId } = await auth()
   if (!clerkId) return new Response("Unauthorized", { status: 401 })
 
-  const flow = await getAuthedFlow(clerkId, params.id)
+  const { id } = await params
+  const flow = await getAuthedFlow(clerkId, id)
   if (!flow) return new Response("Not found", { status: 404 })
 
   const body = await req.json()
@@ -32,21 +34,22 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (!parsed.success) return new Response(parsed.error.message, { status: 400 })
 
   const updated = await db.flow.update({
-    where: { id: params.id },
+    where: { id },
     data: parsed.data,
   })
 
   return Response.json(updated)
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId: clerkId } = await auth()
   if (!clerkId) return new Response("Unauthorized", { status: 401 })
 
-  const flow = await getAuthedFlow(clerkId, params.id)
+  const { id } = await params
+  const flow = await getAuthedFlow(clerkId, id)
   if (!flow) return new Response("Not found", { status: 404 })
 
-  await db.flow.delete({ where: { id: params.id } })
+  await db.flow.delete({ where: { id } })
 
   return new Response(null, { status: 204 })
 }
