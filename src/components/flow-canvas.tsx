@@ -268,7 +268,6 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
           </div>
 
           <div className="space-y-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Components</p>
             <div className="p-5 border-2 border-slate-200 rounded-[40px] cursor-grab font-black text-[13px] uppercase hover:border-blue-400 transition-all text-center" onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'start-end')} draggable>Start / End</div>
             <div className="p-5 border-2 border-slate-200 rounded-[15px] cursor-grab font-black text-[13px] uppercase hover:border-blue-400 transition-all text-center" onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'default')} draggable>Process Step</div>
             <div className="p-4 border-2 border-yellow-200 bg-yellow-50 rounded-xl cursor-grab font-black text-[13px] uppercase text-black text-center" onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'decision')} draggable>Decision</div>
