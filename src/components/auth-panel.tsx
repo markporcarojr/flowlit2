@@ -1,7 +1,6 @@
 'use client'
 
-import { useAuth } from '@clerk/nextjs'
-import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { SignInButton, SignUpButton, useAuth, UserButton } from '@clerk/nextjs'
 
 export default function AuthPanel() {
   const { isSignedIn } = useAuth()

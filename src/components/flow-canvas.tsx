@@ -1,32 +1,33 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import AuthPanel from '@/components/auth-panel'
+import { toPng } from 'html-to-image'
+import { jsPDF } from 'jspdf'
+import { ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactFlow, {
-  ReactFlowProvider,
-  addEdge,
-  useNodesState,
-  useEdgesState,
-  Controls,
   Background,
-  MarkerType,
-  StepEdge,
-  applyNodeChanges,
-  getRectOfNodes,
   Connection,
+  Controls,
   Edge,
+  MarkerType,
   Node,
   NodeChange,
   ReactFlowInstance,
+  ReactFlowProvider,
+  StepEdge,
+  addEdge,
+  applyNodeChanges,
+  getRectOfNodes,
+  useEdgesState,
+  useNodesState,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { jsPDF } from 'jspdf'
-import { toPng } from 'html-to-image'
-import { useRouter } from 'next/navigation'
 import DecisionNode from './decision-node'
-import WaypointNode from './waypoint-node'
 import TipsWindow from './tips-window'
-import AuthPanel from '@/components/auth-panel'
-import { ArrowLeft } from 'lucide-react'
+import WaypointNode from './waypoint-node'
 
 const nodeTypes = { decision: DecisionNode, waypoint: WaypointNode }
 const edgeTypes = { step: StepEdge }
@@ -380,11 +381,10 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
             onNodeDragStop={onNodeDragStop}
             panOnDrag={[1, 2]}
             selectionOnDrag
-            selectionMode="touch"
             panOnScroll
             fitView
           >
-            <Background color="#cbd5e1" gap={24} variant="dots" />
+            <Background color="#cbd5e1" gap={24}  />
             <Controls />
           </ReactFlow>
 

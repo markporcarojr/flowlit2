@@ -11,15 +11,15 @@ const DecisionNode = ({ data, selected }: NodeProps<DecisionNodeData>) => {
   const fontSize = label.length > 20 ? '8px' : label.length > 12 ? '9px' : '10px'
 
   return (
-    <div className={`relative w-[120px] h-[120px] flex items-center justify-center overflow-visible transition-all ${selected ? 'scale-105' : ''}`}>
+    <div className={`relative w-30 h-30 flex items-center justify-center overflow-visible transition-all ${selected ? 'scale-105' : ''}`}>
       <div
-        className="absolute w-[86px] h-[86px] border-2 border-slate-400 rotate-45 shadow-sm"
+        className="absolute w-21.5 h-21.5 border-2 border-slate-400 rotate-45 shadow-sm"
         style={{ backgroundColor: data.color || '#fefce8' }}
       />
 
-      <div className="relative z-20 flex items-center justify-center w-[60px] h-[60px]">
+      <div className="relative z-20 flex items-center justify-center w-15 h-15">
         <div
-          className="font-black leading-tight uppercase tracking-tighter text-center break-words text-slate-800 transition-all duration-200"
+          className="font-black leading-tight uppercase tracking-tighter text-center wrap-break-word text-slate-800 transition-all duration-200"
           style={{ fontSize }}
         >
           {label}
