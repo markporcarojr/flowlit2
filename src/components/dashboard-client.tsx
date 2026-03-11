@@ -4,7 +4,7 @@ import CreateFlowForm from '@/components/forms/create-flow-form'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { UserButton } from '@clerk/nextjs'
-import { ArrowRight, Clock, GitBranch, Plus } from 'lucide-react'
+import { ArrowRight, Clock, GitBranch, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -25,16 +25,24 @@ interface DashboardClientProps {
   flows: Flow[]
 }
 
-export default function DashboardClient({ user, flows }: DashboardClientProps) {
+export default function DashboardClient({ user, flows: initialFlows }: DashboardClientProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [flows, setFlows] = useState(initialFlows)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const firstName = user.name?.split(' ')[0] ?? 'there'
 
+  const handleDelete = async (e: React.MouseEvent, flowId: string) => {
+    e.stopPropagation()
+    setDeletingId(flowId)
+    await fetch(`/api/flows/${flowId}`, { method: 'DELETE' })
+    setFlows(prev => prev.filter(f => f.id !== flowId))
+    setDeletingId(null)
+  }
+
   return (
     <div className="min-h-screen bg-[#f0efe8] font-mono">
-
-      {/* HEADER */}
       <header className="border-b border-black/10 bg-white/60 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -49,8 +57,6 @@ export default function DashboardClient({ user, flows }: DashboardClientProps) {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-16">
-
-        {/* HERO */}
         <div className="mb-16">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-3">Dashboard</p>
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 leading-none mb-4">
@@ -63,10 +69,7 @@ export default function DashboardClient({ user, flows }: DashboardClientProps) {
           </p>
         </div>
 
-        {/* FLOW GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-          {/* CREATE NEW */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <button className="group h-48 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-200">
@@ -80,11 +83,13 @@ export default function DashboardClient({ user, flows }: DashboardClientProps) {
               <DialogHeader>
                 <DialogTitle className="font-black tracking-tight uppercase text-lg">Create Flow</DialogTitle>
               </DialogHeader>
-              <CreateFlowForm onSuccess={() => setOpen(false)} />
+              <CreateFlowForm onSuccess={(newFlow) => {
+                setOpen(false)
+                router.push(`/flow/${newFlow.id}`)
+              }} />
             </DialogContent>
           </Dialog>
 
-          {/* FLOW CARDS */}
           {flows.map((flow) => (
             <Card
               key={flow.id}
@@ -95,9 +100,17 @@ export default function DashboardClient({ user, flows }: DashboardClientProps) {
                 <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                   <GitBranch className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => handleDelete(e, flow.id)}
+                    disabled={deletingId === flow.id}
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 transition-all"
+                  >
+                    <Trash2 className={`w-3.5 h-3.5 ${deletingId === flow.id ? 'text-slate-300' : 'text-red-400'}`} />
+                  </button>
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                </div>
               </div>
-
               <div>
                 <h3 className="font-black text-slate-900 tracking-tight truncate mb-2">{flow.title}</h3>
                 <div className="flex items-center gap-1.5 text-slate-400">
@@ -111,7 +124,6 @@ export default function DashboardClient({ user, flows }: DashboardClientProps) {
           ))}
         </div>
 
-        {/* EMPTY STATE */}
         {flows.length === 0 && (
           <div className="mt-8 text-center py-24 border border-dashed border-slate-200 rounded-2xl">
             <GitBranch className="w-10 h-10 text-slate-200 mx-auto mb-4" />

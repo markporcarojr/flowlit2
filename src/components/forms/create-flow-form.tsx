@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 interface CreateFlowFormProps {
-  onSuccess?: () => void
+  onSuccess: (flow: { id: string }) => void
 }
 
 export default function CreateFlowForm({ onSuccess }: CreateFlowFormProps) {
@@ -32,7 +32,7 @@ export default function CreateFlowForm({ onSuccess }: CreateFlowFormProps) {
     }
 
     const flow = await res.json()
-    onSuccess?.()
+    onSuccess?.(flow)
     router.push(`/flow/${flow.id}`)
   }
 
