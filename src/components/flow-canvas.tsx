@@ -6,7 +6,7 @@ import { toPng } from 'html-to-image'
 import { jsPDF } from 'jspdf'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import ReactFlow, {
   Background,
   Connection,
@@ -74,6 +74,7 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
         if (flow.edges) setEdges(flow.edges)
         if (flow.title) setFlowTitle(flow.title)
       })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flowId])
 
   // --- AUTO-SAVE ---
@@ -145,11 +146,11 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'center',
+        textAlign: 'center' as const,
         fontWeight: '700',
         fontSize: '9px',
-        textTransform: 'uppercase',
-      },
+        textTransform: 'uppercase' as const,
+      } as CSSProperties,
     }
 
     const isYes = connectingHandleId.current === 'yes'
@@ -274,11 +275,11 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        textAlign: 'center',
+        textAlign: 'center' as const,
         fontWeight: '700',
         fontSize: '9px',
-        textTransform: 'uppercase',
-      },
+        textTransform: 'uppercase' as const,
+      } as CSSProperties,
     }
     setNodes((nds) => {
       const updated = [...nds, newNode]
@@ -392,7 +393,7 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
 
           {menu && (
             <div
-              className="absolute z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 flex flex-col gap-1 min-w-[140px]"
+              className="absolute z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 flex flex-col gap-1 min-w-35"
               style={{ top: menu.top, left: menu.left - 256 }}
               onMouseDown={(e) => e.stopPropagation()}
             >

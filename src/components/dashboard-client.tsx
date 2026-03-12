@@ -51,7 +51,7 @@ export default function DashboardClient({ user, flows: initialFlows }: Dashboard
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xs text-slate-500 uppercase tracking-widest hidden sm:block">{user.email}</span>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         </div>
       </header>
