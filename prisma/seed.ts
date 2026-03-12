@@ -1,31 +1,32 @@
-// import { PrismaClient, Prisma } from "@prisma/client"
-// import { PrismaPg } from "@prisma/adapter-pg"
-// import "dotenv/config"
+import { PrismaClient, Prisma } from "../generated/prisma/client"; 
 
-// const adapter = new PrismaPg({
-//   connectionString: process.env.DATABASE_URL!,
-// })
+import { PrismaPg } from "@prisma/adapter-pg"
+import "dotenv/config"
 
-// const prisma = new PrismaClient({ adapter })
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+})
 
-// const userData: Prisma.UserCreateInput[] = [
-//   {
-//     clerkId: "seed_user_1",
-//     email: "mark@flowlit.dev",
-//     name: "Mark",
-//     flows: {
-//       create: [
-//         { title: "My First Flow", nodes: [], edges: [] },
-//         { title: "Onboarding Process", nodes: [], edges: [] },
-//       ],
-//     },
-//   },
-// ]
+const prisma = new PrismaClient({ adapter })
 
-// async function main() {
-//   for (const u of userData) {
-//     await prisma.user.create({ data: u })
-//   }
-// }
+const userData: Prisma.UserCreateInput[] = [
+  {
+    clerkId: "seed_user_1",
+    email: "mark@flowlit.dev",
+    name: "Mark",
+    flows: {
+      create: [
+        { title: "My First Flow", nodes: [], edges: [] },
+        { title: "Onboarding Process", nodes: [], edges: [] },
+      ],
+    },
+  },
+]
 
-// main()
+async function main() {
+  for (const u of userData) {
+    await prisma.user.create({ data: u })
+  }
+}
+
+main()
