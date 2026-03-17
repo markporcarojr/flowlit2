@@ -433,6 +433,71 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
     [reactFlowInstance, setNodes, edges, save],
   );
 
+  const updateNodeLabel = useCallback(
+    (nodeId: string, label: string) => {
+      setNodes((nds) => {
+        const updated = nds.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  label,
+                },
+              }
+            : n,
+        );
+
+        save(updated, edges);
+        return updated;
+      });
+    },
+    [setNodes, edges, save],
+  );
+
+  const updateNodeColor = useCallback(
+    (nodeId: string, color: string) => {
+      setNodes((nds) => {
+        const updated = nds.map((n) => {
+          if (n.id !== nodeId) return n;
+
+          // Decision nodes must NOT get wrapper backgroundColor,
+          // otherwise React Flow paints the square bounding box.
+          if (n.type === "decision") {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                color,
+              },
+              style: {
+                ...n.style,
+                backgroundColor: "transparent",
+              },
+            };
+          }
+
+          // Default / start-end nodes use wrapper styling.
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              color,
+            },
+            style: {
+              ...n.style,
+              backgroundColor: color,
+            },
+          };
+        });
+
+        save(updated, edges);
+        return updated;
+      });
+    },
+    [setNodes, edges, save],
+  );
+
   const exportToPdf = useCallback(() => {
     if (nodes.length === 0) return;
     setSelectedNodeId(null);
@@ -691,18 +756,10 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
                     <input
                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
                       value={selectedNode.data.label}
-                      onChange={(e) =>
-                        setNodes((nds) =>
-                          nds.map((n) =>
-                            n.id === selectedNodeId
-                              ? {
-                                  ...n,
-                                  data: { ...n.data, label: e.target.value },
-                                }
-                              : n,
-                          ),
-                        )
-                      }
+                      onChange={(e) => {
+                        if (!selectedNodeId) return;
+                        updateNodeLabel(selectedNodeId, e.target.value);
+                      }}
                     />
                   </div>
 
@@ -715,21 +772,10 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
                         <button
                           key={c.value}
                           title={c.name}
-                          onClick={() =>
-                            setNodes((nds) =>
-                              nds.map((n) =>
-                                n.id === selectedNodeId
-                                  ? {
-                                      ...n,
-                                      data: {
-                                        ...n.data,
-                                        color: c.value,
-                                      },
-                                    }
-                                  : n,
-                              ),
-                            )
-                          }
+                          onClick={() => {
+                            if (!selectedNodeId) return;
+                            updateNodeColor(selectedNodeId, c.value);
+                          }}
                           className={`w-7 h-7 rounded-md border-2 transition-all ${selectedNode.data.color === c.value ? "border-blue-500 scale-110 shadow-md" : "border-slate-200 hover:border-slate-400"}`}
                           style={{ backgroundColor: c.value }}
                         />
