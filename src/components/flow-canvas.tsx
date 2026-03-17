@@ -14,11 +14,8 @@ import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import {
   ArrowLeft,
-  CheckCircle2,
   Circle,
   Download,
-  Loader2,
-  Minus,
   Square,
   TriangleRight,
 } from "lucide-react";
@@ -100,6 +97,7 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
   const [showTips, setShowTips] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [saving, setSaving] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [savedRecently, setSavedRecently] = useState(false);
   const [flowTitle, setFlowTitle] = useState("Untitled Flow");
   const connectingNodeId = useRef<string | null>(null);
