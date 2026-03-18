@@ -3,6 +3,12 @@
 
 import AuthPanel from "@/components/auth-panel";
 import { Button } from "@/components/ui/button";
+import { HexColorPicker } from "react-colorful";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -47,13 +53,13 @@ import WaypointNode from "./waypoint-node";
 const nodeTypes = { decision: DecisionNode, waypoint: WaypointNode };
 const edgeTypes = { step: StepEdge };
 
-const COLORS = [
-  { name: "White", value: "#ffffff" },
-  { name: "Green", value: "#dcfce7" },
-  { name: "Red", value: "#fee2e2" },
-  { name: "Yellow", value: "#fef9c3" },
-  { name: "Blue", value: "#e0f2fe" },
-];
+// const COLORS = [
+//   { name: "White", value: "#ffffff" },
+//   { name: "Green", value: "#dcfce7" },
+//   { name: "Red", value: "#fee2e2" },
+//   { name: "Yellow", value: "#fef9c3" },
+//   { name: "Blue", value: "#e0f2fe" },
+// ];
 
 const COMPONENTS = [
   {
@@ -653,17 +659,20 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
             </div>
 
             {/* Bottom actions */}
-            <div className=" mt-auto flex flex-col gap-2 font-bold">
+            <div className=" mt-auto flex flex-col gap-2 ">
               <Button
                 variant="outline"
                 color="blue"
-                className="w-full gap-2 font-bold text-center bg-blue-800 hover:bg-blue-600"
+                className="w-full gap-2 font-bold text-center cursor-pointer bg-blue-800 hover:bg-blue-600 text-white"
                 onClick={() => setShowTips((prev) => !prev)}
               >
                 {showTips ? "Hide Tips" : "Show Tips"}
               </Button>
-              <Button className="w-full gap-2" onClick={exportToPdf}>
-                <Download className="w-3.5 h-3.5" />
+              <Button
+                className="w-full gap-2 font-bold hover:bg-[#2d2d2d] cursor-pointer"
+                onClick={exportToPdf}
+              >
+                <Download className="w-3.5 h-3.5 " />
                 Export PDF
               </Button>
               <Separator className="my-1" />
@@ -767,19 +776,58 @@ export default function FlowCanvas({ flowId }: FlowCanvasProps) {
                     <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block mb-1.5">
                       Color
                     </label>
-                    <div className="flex gap-1.5">
-                      {COLORS.map((c) => (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[
+                        "#ffffff",
+                        "#dcfce7",
+                        "#fee2e2",
+                        "#fef9c3",
+                        "#e0f2fe",
+                        "#f3e8ff",
+                        "#ffedd5",
+                      ].map((c) => (
                         <button
-                          key={c.value}
-                          title={c.name}
-                          onClick={() => {
-                            if (!selectedNodeId) return;
-                            updateNodeColor(selectedNodeId, c.value);
-                          }}
-                          className={`w-7 h-7 rounded-md border-2 transition-all ${selectedNode.data.color === c.value ? "border-blue-500 scale-110 shadow-md" : "border-slate-200 hover:border-slate-400"}`}
-                          style={{ backgroundColor: c.value }}
+                          key={c}
+                          onClick={() =>
+                            selectedNodeId && updateNodeColor(selectedNodeId, c)
+                          }
+                          className={`w-6 h-6 rounded-md border-2 transition-all hover:scale-110 ${
+                            selectedNode.data.color === c
+                              ? "border-blue-500 scale-110 shadow-md"
+                              : "border-slate-200"
+                          }`}
+                          style={{ backgroundColor: c }}
                         />
                       ))}
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            className="w-6 h-6 rounded-md border-2 border-dashed border-slate-300 hover:border-slate-400 flex items-center justify-center transition-all hover:scale-110"
+                            style={{
+                              backgroundColor:
+                                selectedNode.data.color || "#ffffff",
+                            }}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent side="left" className="w-auto p-3">
+                          <HexColorPicker
+                            color={selectedNode.data.color || "#ffffff"}
+                            onChange={(color) =>
+                              selectedNodeId &&
+                              updateNodeColor(selectedNodeId, color)
+                            }
+                          />
+                          <input
+                            className="mt-2 w-full px-2 py-1 text-xs border border-slate-200 rounded-md font-mono outline-none focus:border-blue-400"
+                            value={selectedNode.data.color || "#ffffff"}
+                            onChange={(e) =>
+                              selectedNodeId &&
+                              updateNodeColor(selectedNodeId, e.target.value)
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
 
